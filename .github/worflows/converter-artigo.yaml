@@ -1,0 +1,59 @@
+name: Converter artigo para diferentes formatos
+
+on:
+  issues:
+    types: [opened]
+    # Executar apenas quando houver a label "artigo"
+    # e a issue conter a URL de um arquivo .md
+    # na descrição
+    labels: [artigo]
+
+jobs:
+    issue_created:
+      runs-on: ubuntu-latest
+      if: contains('["OWNER", "COLLABORATOR", "MEMBER"]', github.event.issue.author_association)
+#      converter:
+#        runs-on: ubuntu-latest
+      steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v2
+      - name: Instalar as dependências
+        run: |
+          sudo apt-get update && \
+          sudo apt-get install -y pandoc texlive-xetex && \
+          sudo tlmgr update --self && \
+          sudo tlmgr install adjustbox collectbox csquotes enumitem framed fvextra letltxmacro ly1 mdframed mweights needspace pagecolor sourcecodepro sourcesanspro titling ucharcat ulem xkeyval xurl zref
+      - name: Converter artigo
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [[ ${{ github.event.issue.body }} == *".md"* ]]; then
+            # Baixar o arquivo .md da URL da issue
+            curl -o input.md ${{ github.event.issue.body }}
+            # Extrair o título do artigo do cabeçalho YAML
+            title=$(awk '/^title: / {print $2}' input.md)
+            # Converter para HTML
+            pandoc --standalone --from markdown --to html5 -o output.html input.md
+            # Mover o arquivo convertido para a pasta artigos-convertidos/título
+            mkdir -p "artigos-convertidos/${title}"
+            mv output.html "artigos-convertidos/${title}/"
+            # Converter para DOCX
+            pandoc --standalone --from markdown --to docx -o output.docx input.md
+            # Mover o arquivo convertido para a pasta artigos-convertidos/título
+            mv output.docx "artigos-convertidos/${title}/"
+            # Converter para PDF
+            pandoc --standalone --from markdown --to pdf -o output.pdf input.md
+            # Mover o arquivo convertido para a pasta artigos-convertidos/título
+            mv output.pdf "artigos-convertidos/${title}/"
+            # Excluir o arquivo .md
+            rm input.md
+          fi
+      - name: Adicionar arquivos convertidos ao git e fazer o commit
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config --global user.email "github-actions@github.com"
+          git config --global user.name "GitHub Actions"
+          git add artigos-convertidos
+          git commit -m "Adicionar arquivos convertidos"
+          git push
