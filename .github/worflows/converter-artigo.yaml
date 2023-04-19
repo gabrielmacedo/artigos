@@ -34,17 +34,17 @@ jobs:
             title=$(awk '/^title: / {print $2}' input.md)
             # Converter para HTML
             pandoc --standalone --from markdown --to html5 -o output.html input.md
-            # Mover o arquivo convertido para a pasta artigos-convertidos/título
-            mkdir -p "artigos-convertidos/${title}"
-            mv output.html "artigos-convertidos/${title}/"
+            # Mover o arquivo convertido para a pasta convertidos/título
+            mkdir -p "convertidos/${title}"
+            mv output.html "convertidos/${title}/"
             # Converter para DOCX
             pandoc --standalone --from markdown --to docx -o output.docx input.md
-            # Mover o arquivo convertido para a pasta artigos-convertidos/título
-            mv output.docx "artigos-convertidos/${title}/"
+            # Mover o arquivo convertido para a pasta convertidos/título
+            mv output.docx "convertidos/${title}/"
             # Converter para PDF
             pandoc --standalone --from markdown --to pdf -o output.pdf input.md
-            # Mover o arquivo convertido para a pasta artigos-convertidos/título
-            mv output.pdf "artigos-convertidos/${title}/"
+            # Mover o arquivo convertido para a pasta convertidos/título
+            mv output.pdf "convertidos/${title}/"
             # Excluir o arquivo .md
             rm input.md
           fi
@@ -54,6 +54,6 @@ jobs:
         run: |
           git config --global user.email "github-actions@github.com"
           git config --global user.name "GitHub Actions"
-          git add artigos-convertidos
+          git add convertidos
           git commit -m "Adicionar arquivos convertidos"
           git push
